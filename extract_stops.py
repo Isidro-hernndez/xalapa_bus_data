@@ -36,7 +36,8 @@ class Stop:
         for attr, trans in self.attributes.items():
             setattr(self, attr, data['properties'][trans])
 
-        self.location = tuple(data['geometry']['coordinates'])
+        self.lat = data['geometry']['coordinates'][1]
+        self.lon = data['geometry']['coordinates'][0]
 
     @classmethod
     def redis_prefix(cls, id, attr):
@@ -50,6 +51,9 @@ class Stop:
         for attr, trans in self.attributes.items():
             red.set(self.redis_prefix(self.id, attr), getattr(self, attr))
 
+        red.set(self.redis_prefix(self.id, 'lat'), self.lat)
+        red.set(self.redis_prefix(self.id, 'lon'), self.lon)
+
         return self
 
     @classmethod
@@ -60,13 +64,24 @@ class Stop:
             'properties': {
                 trans: red.get(cls.redis_prefix(stop_id, attr)).decode('utf8')
                 for attr, trans in cls.attributes.items()
-            }
+            },
+            'geometry': {
+                'coordinates': [
+                    float(red.get(cls.redis_prefix(stop_id, 'lat')).decode('utf8')),
+                    float(red.get(cls.redis_prefix(stop_id, 'lon')).decode('utf8')),
+                ],
+            },
         })
 
     def to_json(self):
-        return {
+        data = {
             attr: getattr(self, attr) for attr, trans in self.attributes.items()
         }
+
+        data['lat'] = self.lat
+        data['lon'] = self.lon
+
+        return data
 
 
 if __name__ == '__main__':
