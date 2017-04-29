@@ -47,7 +47,12 @@ class Stop:
             attr  = attr,
         )
 
+    def get_near(self):
+        red.georadius('transport:stops:heohash', self.lon, self.lat, '60', 'm')
+
     def persist(self):
+        near_stops = self.get_near()
+
         for attr, trans in self.attributes.items():
             red.set(self.redis_prefix(self.id, attr), getattr(self, attr))
 
