@@ -14,7 +14,7 @@ def has_route(contents):
     return 'route.geojson' in contents
 
 def get_stops():
-    return [Stop.from_key(key).to_json() for key in red.keys('transport:stops:*:id')]
+    return [Stop.from_key(key).to_geojson() for key in red.keys('transport:stops:*:id')]
 
 
 class Stop:
@@ -56,6 +56,8 @@ class Stop:
         for attr, trans in self.attributes.items():
             red.set(self.redis_prefix(self.id, attr), getattr(self, attr))
 
+        red.geoadd('transport:stops:geohash', self.lon, self.lat, self.id)
+
         red.set(self.redis_prefix(self.id, 'lat'), self.lat)
         red.set(self.redis_prefix(self.id, 'lon'), self.lon)
 
@@ -72,21 +74,27 @@ class Stop:
             },
             'geometry': {
                 'coordinates': [
-                    float(red.get(cls.redis_prefix(stop_id, 'lat')).decode('utf8')),
                     float(red.get(cls.redis_prefix(stop_id, 'lon')).decode('utf8')),
+                    float(red.get(cls.redis_prefix(stop_id, 'lat')).decode('utf8')),
                 ],
             },
         })
 
-    def to_json(self):
-        data = {
+    def to_geojson(self):
+        properties = {
             attr: getattr(self, attr) for attr, trans in self.attributes.items()
         }
 
-        data['lat'] = self.lat
-        data['lon'] = self.lon
+        feature = {
+            'type' : 'Feature',
+            'properties': dict(),
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [self.lon, self.lat],
+            },
+        }
 
-        return data
+        return feature
 
 
 if __name__ == '__main__':
@@ -97,4 +105,9 @@ if __name__ == '__main__':
             for stopdata in data['features']:
                 Stop(stopdata).persist()
 
-    json.dump(get_stops(), open('data/stops.json', 'w'), indent=2)
+    feature_collection = {
+        'type': 'FeatureCollection',
+        'features': get_stops(),
+    }
+
+    json.dump(feature_collection, open('data/stops.json', 'w'), indent=2)
