@@ -48,7 +48,14 @@ class Stop:
         )
 
     def get_near(self):
-        red.georadius('transport:stops:heohash', self.lon, self.lat, '60', 'm')
+        return list(map(
+            lambda x:x[1],
+            red.georadius('transport:stops:geohash', self.lon, self.lat, 20,
+                unit='m',
+                withdist=True,
+                sort='DESC'
+            )
+        ))
 
     def persist(self):
         near_stops = self.get_near()
