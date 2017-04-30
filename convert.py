@@ -8,6 +8,12 @@ def has_shape(contents):
         contents
     ))
 
+def doesnt_have_json(contents):
+    return not any(map(
+        lambda x: x.endswith('.geojson'),
+        contents
+    ))
+
 def get_shape(contents):
     return list(filter(
         lambda x: x.endswith('.shp'),
@@ -21,8 +27,8 @@ def convert(shapefile, parent):
     subprocess.run('ogr2ogr -f geoJSON {} {}'.format(geojsonname, shapename).split(' '))
 
 if __name__ == '__main__':
-    for parent, nose, contents in os.walk('data'):
-        if has_shape(contents) and len(contents) == 4:
+    for parent, dirs, contents in os.walk('data'):
+        if has_shape(contents) and doesnt_have_json(contents):
             shapefile = get_shape(contents)
 
             convert(shapefile, parent)
