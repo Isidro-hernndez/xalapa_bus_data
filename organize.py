@@ -4,13 +4,14 @@ from functools import wraps
 import os
 import subprocess
 from lib.stops import *
-from lib.tasks import UncompressTask, ConvertTask, ExtractStopsTask
+from lib.tasks import UncompressTask, ConvertTask, ExtractStopsTask, DumpStopsTask
 
 available_tasks = dict()
 
 UncompressTask().register(available_tasks)
 ConvertTask().register(available_tasks)
 ExtractStopsTask().register(available_tasks)
+DumpStopsTask().register(available_tasks)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Apply different administrative tasks to data')

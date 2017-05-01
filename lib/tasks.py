@@ -54,10 +54,13 @@ class ExtractStopsTask(Task):
             for stopdata in data['features']:
                 Stop(stopdata).persist()
 
+
+class DumpStopsTask(Task):
+
     def on_finish(self):
         feature_collection = {
             'type': 'FeatureCollection',
             'features': Stop.get_stops(),
         }
 
-        json.dump(feature_collection, open('data/stops.json', 'w'), indent=2)
+        json.dump(feature_collection, open('build/stops.geojson', 'w'), indent=2)
