@@ -1,5 +1,6 @@
 import os
 import json
+import subprocess
 from .stops import Stop
 from .utils import *
 
@@ -18,9 +19,10 @@ class UncompressTask(Task):
     def on_process(self, parent, dirs, files):
         if has('.zip', files):
             for zipfile in files:
-                self.extract_in_place(zipfile, parent)
+                if not os.path.isdir(os.path.join(parent, extract_name(zipfile))):
+                    self.extract_in_place(zipfile, parent)
 
-    def extract_in_place(zipfile, parent):
+    def extract_in_place(self, zipfile, parent):
         dirname = os.path.join(parent, extract_name(zipfile))
         zipname = os.path.join(parent, zipfile)
 
@@ -32,7 +34,7 @@ class UncompressTask(Task):
 
 class ConvertTask(Task):
 
-    def convert(shapefile, parent):
+    def convert(self, shapefile, parent):
         shapename = os.path.join(parent, shapefile)
         geojsonname = os.path.join(parent, 'route.geojson')
 
