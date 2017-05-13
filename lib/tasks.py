@@ -66,3 +66,41 @@ class DumpStopsTask(Task):
         }
 
         json.dump(feature_collection, open('build/stops.geojson', 'w'), indent=2)
+
+class ComputeBoundsTask(Task):
+
+    def __init__(self):
+        self.max_lat = -float('inf')
+        self.max_lon = -float('inf')
+        self.min_lat = float('inf')
+        self.min_lon = float('inf')
+
+    def on_process(self, parent, dirs, files):
+        if has('.geojson', files):
+            geojsonname = get('.geojson', files)
+            data = json.load(open(os.path.join(parent, geojsonname), 'r'))
+
+            for feature in data['features']:
+                if feature['geometry']['type'] == 'LineString':
+                    for coordinate in feature['geometry']['coordinates']:
+                        self.process_lon(coordinate[0])
+                        self.process_lat(coordinate[1])
+
+                if feature['geometry']['type'] == 'Point':
+                    self.process_lon(feature['geometry']['coordinates'][0])
+                    self.process_lat(feature['geometry']['coordinates'][1])
+
+    def on_finish(self):
+        print('({},{},{},{})'.format(self.min_lat, self.min_lon, self.max_lat, self.max_lon))
+
+    def process_lat(self, lat):
+        if lat > self.max_lat:
+            self.max_lat = lat
+        if lat < self.min_lat:
+            self.min_lat = lat
+
+    def process_lon(self, lon):
+        if lon > self.max_lon:
+            self.max_lon = lon
+        if lon < self.min_lon:
+            self.min_lon = lon
